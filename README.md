@@ -1,2 +1,271 @@
-# Real-Time-Health-Insurance-Analytics-Pipeline-Project
-Machine Learning Big Data Project Sem2
+# Explainable AI-Driven Health Insurance Claim Processing Pipeline
+
+**Course:** CSL7110 - Machine Learning with Big Data  
+**Team:** Ashish Sinha (M25DE1047), Aniket Srivastava (M25DE1051), Akshay Kumar (M25DE1028)  
+**Runtime:** Local execution using Docker Compose  
+**Core Stack:** Apache Kafka, Apache Spark 3.4, HDFS, Hive, Airflow, Grafana, Superset, SHAP
+
+## Overview
+
+This project implements an end-to-end health insurance claim processing pipeline designed for fraud detection and explainable analytics on a local big data stack.
+
+The system combines real-time ingestion, distributed storage, batch feature engineering, machine learning, explainability, SQL analytics, workflow orchestration, and dashboard monitoring in one integrated pipeline.
+
+The implementation is fully containerized and runs locally using Docker Compose.
+
+## What the Project Covers
+
+- Real-time health claim event generation using Kafka
+- Streaming ingestion with Spark Structured Streaming
+- Raw data storage in HDFS using Parquet
+- Batch ETL and feature engineering using PySpark
+- Fraud detection model training with Spark MLlib
+- SHAP-based explainability for prediction interpretation
+- SQL analytics using Hive and Spark SQL
+- Workflow scheduling with Airflow
+- Monitoring and visualization using Grafana and Superset
+- Throughput and latency benchmarking
+
+## Architecture Summary
+
+The pipeline follows this flow:
+
+**Kafka Producer -> Spark Structured Streaming -> HDFS Parquet -> Batch Feature Engineering -> ML Training -> SHAP Explainability -> Hive / Spark SQL -> Dashboards / Reports / Benchmarks**
+
+### Main Layers
+
+**1. Streaming Layer**
+- Synthetic insurance claim events are generated using Faker
+- Kafka publishes claim events continuously
+- Spark Structured Streaming consumes and validates incoming records
+- Clean records are written to HDFS in Parquet format
+
+**2. Batch Processing Layer**
+- Raw claim records are read from HDFS
+- Derived features are created for fraud detection
+- Processed feature tables are stored for training and analytics
+
+**3. Machine Learning Layer**
+- Primary model: GBTClassifier
+- Baseline model: Logistic Regression
+- Cross-validation is used during training
+- Evaluation includes AUC-ROC, F1-score, precision, recall, and confusion matrix
+
+**4. Explainability Layer**
+- SHAP is used to explain model behavior
+- Global importance and local prediction-level explanations are generated
+- SHAP outputs are stored as CSV and JSON artifacts for analysis
+
+**5. Analytics and Monitoring Layer**
+- Spark SQL queries support fraud analysis and trend exploration
+- Grafana provides operational monitoring
+- Superset provides visual analytics over processed outputs
+- Airflow manages recurring retraining workflow
+
+## Repository Structure
+
+```text
+health-insurance-xai-pipeline/
+├── docker/
+│   ├── docker-compose.yml
+│   ├── hadoop.env
+│   ├── init-postgres.sql
+│   └── grafana/provisioning/
+├── kafka/
+│   ├── producer.py
+│   └── requirements.txt
+├── spark/
+│   ├── streaming_ingestion.py
+│   ├── batch_feature_engineering.py
+│   ├── ml_training.py
+│   ├── shap_explainability.py
+│   ├── sql_analytics.py
+│   ├── benchmarking.py
+│   └── requirements.txt
+├── airflow/
+│   └── dags/
+│       └── retraining_dag.py
+├── dashboard/
+│   ├── grafana_dashboard.json
+│   └── superset_setup.md
+├── data/
+│   ├── README.md
+│   ├── augmentation_strategy.md
+│   └── insurance_sample.csv
+├── docs/
+│   ├── architecture.md
+│   └── report_summary.txt
+├── outputs/
+│   ├── logs/
+│   ├── metrics/
+│   ├── plots/
+│   ├── predictions/
+│   ├── benchmarks/
+│   └── airflow_run_report.txt
+└── scripts/
+    ├── start_pipeline.sh
+    ├── start_producer.sh
+    ├── submit_streaming.sh
+    └── submit_batch.sh
+
+
+System Requirements
+-------------------
+  RAM    : 16 GB minimum (all 13 services)
+  CPU    : 4 cores minimum (8 recommended)
+  Disk   : 20 GB free
+  OS     : Linux, macOS, or Windows with WSL2
+  Tools  : Docker 24+, Docker Compose v2, Python 3.10+
+
+
+Datasets
+--------
+1. Primary: US Health Insurance Dataset (Kaggle)
+   URL: https://www.kaggle.com/datasets/teertha/ushealthinsurancedataset
+   File: data/insurance.csv (download and place here)
+   Note: Fraud labels are augmented. See data/augmentation_strategy.md.
+
+2. Secondary: CMS Medicare Synthetic Claims (DE-SynPUF)
+   URL: https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs
+   Used for large-scale Spark batch volume validation.
+
+3. Streaming: Generated by kafka/producer.py using Faker (no download needed).
+
+
+Quick Start
+-----------
+
+Step 1: Clone and enter the repository.
+
+Step 2: Start all services.
+  cd scripts
+  ./start_pipeline.sh
+
+  This brings up all 13 containers in the correct startup order and
+  creates all required HDFS directories and the Kafka topic.
+
+Step 3: Download dataset (optional for batch bootstrap).
+  Place insurance.csv in data/ after downloading from Kaggle.
+
+Step 4: Start the Kafka producer (in a separate terminal).
+  ./scripts/start_producer.sh 2 0.08
+  (2 events/sec, 8% fraud rate)
+
+Step 5: Submit the Spark streaming job (in another terminal).
+  ./scripts/submit_streaming.sh
+
+  Let this run for at least 5-10 minutes to accumulate data in HDFS.
+
+Step 6: Run the full batch pipeline.
+  ./scripts/submit_batch.sh
+
+  This runs: feature engineering -> ML training -> SHAP -> SQL analytics -> benchmarks.
+  Estimated total time: 25-30 minutes on a 4-core machine.
+
+Step 7: Access dashboards.
+  Grafana  : http://localhost:3000  (admin / grafana123)
+  Airflow  : http://localhost:8083  (admin / admin123)
+  Spark UI : http://localhost:8080
+  HDFS UI  : http://localhost:9870
+  Superset : http://localhost:8088
+
+
+Manual Spark Submit Commands
+-----------------------------
+If you prefer to run steps individually from inside the spark-master container:
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 \
+    /opt/spark-apps/streaming_ingestion.py
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    /opt/spark-apps/batch_feature_engineering.py
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    /opt/spark-apps/ml_training.py
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    /opt/spark-apps/shap_explainability.py
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    /opt/spark-apps/sql_analytics.py
+
+  docker exec spark-master spark-submit \
+    --master spark://spark-master:7077 \
+    /opt/spark-apps/benchmarking.py
+
+
+ML Model Notes
+--------------
+The primary model is Spark MLlib's GBTClassifier rather than XGBoost.
+Spark's XGBoost4J integration requires native binary compilation and
+produces JVM load errors on ARM-based Macs and some Linux configurations.
+GBTClassifier is a full gradient boosted tree implementation in pure Java/Scala
+with no external native dependencies, identical in concept and only marginally
+different in default hyper-parameters. This choice is documented in docs/architecture.md.
+
+
+SHAP Notes
+----------
+SHAP's TreeExplainer cannot directly consume Spark ML PipelineModel objects.
+The explainability layer in shap_explainability.py collects a stratified
+sample to the Spark driver, trains a local sklearn GradientBoostingClassifier,
+and applies SHAP to that model. Feature importance rankings are consistent
+with the full Spark GBT across multiple runs on the same data. This is the
+standard practice for SHAP with Spark ML when using non-JVM feature
+importances. See docs/architecture.md for full justification.
+
+
+Grafana Dashboard Import
+------------------------
+If the auto-provisioned dashboard does not appear:
+  1. Open http://localhost:3000 (admin/grafana123)
+  2. Dashboards -> Import
+  3. Upload dashboard/grafana_dashboard.json
+  4. Select PostgreSQL-HealthXAI as the datasource
+  5. Click Import
+
+
+Stopping the Pipeline
+---------------------
+  cd docker
+  docker compose down
+
+To also remove all data volumes:
+  docker compose down -v
+
+
+Generated Outputs (in outputs/)
+---------------------------------
+  logs/spark_streaming_job.log      Streaming ingestion session log
+  logs/spark_batch_job.log          Batch ETL + ML + SHAP execution log
+  logs/airflow_dag_run.log          Airflow scheduled run log
+  metrics/training_metrics.json     GBT and LR evaluation metrics
+  metrics/confusion_matrix.csv      GBT confusion matrix
+  metrics/shap_global_importance.json  Feature importance from SHAP
+  predictions/predictions_sample.csv   600-row prediction sample with probabilities
+  predictions/shap_values_sample.csv   250-row SHAP values per feature
+  benchmarks/benchmark_results.csv  Throughput and latency measurements
+  airflow_run_report.txt            Auto-generated retraining summary
+
+
+Port Reference
+--------------
+  Service          External Port
+  Spark Master UI  8080
+  Spark Worker 1   8081
+  Spark Worker 2   8082
+  Airflow          8083
+  Superset         8088
+  HDFS NameNode    9870
+  Grafana          3000
+  Kafka            9092
+  Zookeeper        2181
+  PostgreSQL       5432
+  HDFS DataNode    9864
+  Hive Metastore   9083 (internal)
