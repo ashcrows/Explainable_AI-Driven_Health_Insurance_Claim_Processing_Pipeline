@@ -1,0 +1,32 @@
+=======================================================================
+SECTION 4 — DATASETS
+=======================================================================
+
+DATASET 1 (Primary — Batch training):
+  Name    : US Health Insurance Dataset
+  Source  : Kaggle
+  URL     : kaggle.com/datasets/teertha/ushealthinsurancedataset
+  Format  : CSV
+  Size    : ~50,000 records
+  Columns : age, sex, bmi, children, smoker, region, charges
+  Use     : Initial ML model training and feature engineering
+
+DATASET 2 (Secondary — Scale demonstration):
+  Name    : Medicare Claims Synthetic Dataset (CMS)
+  Source  : Centers for Medicare & Medicaid Services
+  URL     : cms.gov/Research-Statistics-Data/Downloadable-Public-Use-Files
+  Format  : CSV / JSON
+  Size    : ~2.3 GB
+  Use     : Large-scale batch processing to justify Spark usage
+            (single machine cannot handle 2.3GB in pandas)
+
+DATASET 3 (Simulated Kafka Stream):
+  Tool    : Python script using Faker library
+  Output  : JSON events to Kafka topic
+  Rate    : 10,000+ claims/minute
+  Use     : Real-time streaming module demonstration
+  Note    : Inject synthetic fraud patterns every ~500 records
+            (e.g. unusually high claim amounts, rare diagnosis codes)
+
+FINAL PROCESSED SIZE: ~3-5 GB across all layers (raw + transformed
++ Parquet + Hive tables)
