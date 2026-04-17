@@ -1,0 +1,27 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL-HealthXAI
+    type: postgres
+    url: postgres:5432
+    user: postgres
+    secureJsonData:
+      password: postgres123
+    jsonData:
+      database: postgres
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1400
+      timescaledb: false
+    version: 1
+    editable: true
+
+  - name: Prometheus-Local
+    type: prometheus
+    url: http://localhost:9090
+    access: proxy
+    isDefault: false
+    version: 1
+    editable: true
