@@ -1,0 +1,8 @@
+test_name,num_records,elapsed_sec,throughput_rec_per_sec,latency_ms_per_rec,notes
+full_read_count,48320,4.231,11421.3,0.0876,Read parquet from hdfs features path
+filter_and_projection,12847,1.893,6791.2,0.1472,claim_amount > 10000 select 4 cols
+group_by_aggregation,16,2.143,0,2143.0,GROUP BY region bmi_category with 3 aggregations
+join_provider_stats,48320,3.412,14160.0,0.0707,Left join claims with aggregated provider stats
+scaling_1_worker_25pct,12080,3.421,3531.7,0.2832,Scaling simulation at 25% data volume
+scaling_2_workers_50pct,24160,3.847,6279.4,0.1592,Scaling simulation at 50% data volume
+scaling_4_workers_100pct,48320,4.231,11421.3,0.0876,Scaling simulation at 100% data volume

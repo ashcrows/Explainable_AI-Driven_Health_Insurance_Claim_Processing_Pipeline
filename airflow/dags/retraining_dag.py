@@ -11,7 +11,7 @@ SPARK_MASTER = "spark://spark-master:7077"
 SPARK_APPS = "/opt/spark-apps"
 SPARK_SUBMIT_BASE = (
     "docker exec spark-master "
-    "spark-submit "
+    "/opt/spark/bin/spark-submit "
     f"--master {SPARK_MASTER} "
     "--conf spark.executor.memory=1g "
     "--conf spark.driver.memory=1g "
