@@ -173,14 +173,7 @@ services:
       - ../data:/opt/spark-data
       - spark_logs:/opt/spark/logs
     command: >
-      bash -c "pip install --quiet --no-cache-dir
-        shap==0.44.0
-        scikit-learn==1.3.2
-        pandas==2.1.3
-        numpy==1.26.2
-        matplotlib==3.8.2
-        pyarrow==14.0.1 &&
-      /opt/spark/sbin/start-master.sh &&
+      bash -c "/opt/spark/sbin/start-master.sh &&
       tail -f /opt/spark/logs/spark--org.apache.spark.deploy.master.Master-*.out"
     deploy:
       resources:
@@ -206,15 +199,8 @@ services:
       - ../outputs:/opt/spark-apps/outputs
       - ../data:/opt/spark-data
     command: >
-      bash -c "pip install --quiet --no-cache-dir
-        shap==0.44.0
-        scikit-learn==1.3.2
-        pandas==2.1.3
-        numpy==1.26.2
-        matplotlib==3.8.2
-        pyarrow==14.0.1 &&
-      /opt/spark/sbin/start-worker.sh spark://spark-master:7077
-        --memory 2G --cores 2 --webui-port 8081 &&
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077
+      --memory 768M --cores 2 --webui-port 8081 &&
       tail -f /opt/spark/logs/spark--org.apache.spark.deploy.worker.Worker-*.out"
     deploy:
       resources:
@@ -240,15 +226,8 @@ services:
       - ../outputs:/opt/spark-apps/outputs
       - ../data:/opt/spark-data
     command: >
-      bash -c "pip install --quiet --no-cache-dir
-        shap==0.44.0
-        scikit-learn==1.3.2
-        pandas==2.1.3
-        numpy==1.26.2
-        matplotlib==3.8.2
-        pyarrow==14.0.1 &&
-      /opt/spark/sbin/start-worker.sh spark://spark-master:7077
-        --memory 1G --cores 2 --webui-port 8081 &&
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077
+      --memory 768M --cores 2 --webui-port 8081 &&
       tail -f /opt/spark/logs/spark--org.apache.spark.deploy.worker.Worker-*.out"
     deploy:
       resources:

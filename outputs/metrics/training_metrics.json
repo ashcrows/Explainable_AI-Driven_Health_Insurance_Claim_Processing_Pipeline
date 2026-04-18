@@ -1,0 +1,26 @@
+{
+  "gbt": {
+    "auc_roc": 1.0,
+    "auc_pr": 1.0,
+    "f1": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "accuracy": 1.0,
+    "model": "GBTClassifier",
+    "confusion_matrix": {
+      "tp": 171,
+      "tn": 378,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "logistic_regression": {
+    "auc_roc": 1.0,
+    "auc_pr": 1.0,
+    "f1": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "accuracy": 1.0,
+    "model": "LogisticRegression"
+  }
+}

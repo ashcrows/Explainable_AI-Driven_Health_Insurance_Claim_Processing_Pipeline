@@ -3,8 +3,8 @@ set -e
 
 SPARK_SUBMIT="docker exec spark-master /opt/spark/bin/spark-submit \
   --master spark://spark-master:7077 \
-  --conf spark.executor.memory=1g \
-  --conf spark.driver.memory=1g"
+  --conf spark.executor.memory=512m \
+  --conf spark.driver.memory=512m"
 
 echo "========================================"
 echo " Batch Pipeline — 5-step execution"
