@@ -1,6 +1,12 @@
 # Health Insurance XAI Pipeline
 
-End-to-end fraud detection pipeline for health insurance claims using Kafka streaming, Apache Spark MLlib, SHAP explainability, and Airflow orchestration. Fully containerized and optimized for **macOS Apple Silicon (M1/M2)**.
+End-to-end fraud detection pipeline for health insurance claims using Kafka streaming, Apache Spark MLlib, SHAP explainability, and Airflow orchestration.
+
+---
+
+**Course:** CSL7110 - Machine Learning with Big Data  
+**Team:** Ashish Sinha (M25DE1047), Aniket Srivastava (M25DE1051), Akshay Kumar (M25DE1028)  
+**Runtime:** Local execution using Docker Compose
 
 ---
 
