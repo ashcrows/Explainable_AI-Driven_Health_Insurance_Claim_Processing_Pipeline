@@ -1,15 +1,4 @@
-
-# ─────────────────────────────────────────────────────────────
-#  Health Insurance XAI Pipeline — Docker Compose
-#  Fixed for macOS Apple Silicon (M1/M2)
-#
-#  Changes from original:
-#  - HDFS port 9000 → 19000 on host (avoids macOS AirPlay conflict)
-#  - spark-worker-2 memory: 2g → 1g  (total cluster: ~10.75 GB)
-#  - spark services: install shap + sklearn via pip on startup
-#  - superset: added db init + admin user creation entrypoint
-#  - platform: linux/amd64 on bde2020 images (Rosetta 2 required)
-# ─────────────────────────────────────────────────────────────
+# version: "3.8"
 
 services:
 
@@ -62,14 +51,13 @@ services:
     restart: unless-stopped
 
   hdfs-namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     platform: linux/amd64
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: hdfs-namenode
     hostname: hdfs-namenode
     ports:
       - "9870:9870"
-      # Port 9000 remapped to 19000 — macOS AirPlay Receiver uses 9000
-      - "19000:9000"
+      - "9000:9000"
     environment:
       CLUSTER_NAME: health-xai-cluster
     env_file:
@@ -83,8 +71,8 @@ services:
     restart: unless-stopped
 
   hdfs-datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     platform: linux/amd64
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: hdfs-datanode
     hostname: hdfs-datanode
     depends_on:
@@ -126,8 +114,8 @@ services:
       retries: 5
 
   hive-metastore:
-    image: bde2020/hive:2.3.2-postgresql-metastore
     platform: linux/amd64
+    image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hive-metastore
     hostname: hive-metastore
     depends_on:
@@ -155,85 +143,69 @@ services:
     restart: unless-stopped
 
   spark-master:
-    # apache/spark: official free image (bitnami versioned tags removed Sept 2025)
+    platform: linux/amd64
     build:
-      context: spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark.Dockerfile
     container_name: spark-master
     hostname: spark-master
-    user: root
     ports:
       - "8080:8080"
       - "7077:7077"
-    environment:
-      SPARK_NO_DAEMONIZE: "true"
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master
+      --port 7077
+      --webui-port 8080
     volumes:
       - ../spark:/opt/spark-apps
       - ../outputs:/opt/spark-apps/outputs
       - ../data:/opt/spark-data
-      - spark_logs:/opt/spark/logs
-    command: >
-      bash -c "/opt/spark/sbin/start-master.sh &&
-      tail -f /opt/spark/logs/spark--org.apache.spark.deploy.master.Master-*.out"
-    deploy:
-      resources:
-        limits:
-          memory: 1g
+      - spark_logs:/tmp/spark-events
     restart: unless-stopped
+
   spark-worker-1:
+    platform: linux/amd64
     build:
-      context: spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark.Dockerfile
     container_name: spark-worker-1
     hostname: spark-worker-1
-    user: root
     depends_on:
       - spark-master
     ports:
       - "8081:8081"
-    environment:
-      SPARK_NO_DAEMONIZE: "true"
-      SPARK_WORKER_WEBUI_PORT: "8081"
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      --webui-port 8081
+      spark://spark-master:7077
     volumes:
       - ../spark:/opt/spark-apps
       - ../outputs:/opt/spark-apps/outputs
       - ../data:/opt/spark-data
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077
-      --memory 768M --cores 2 --webui-port 8081 &&
-      tail -f /opt/spark/logs/spark--org.apache.spark.deploy.worker.Worker-*.out"
-    deploy:
-      resources:
-        limits:
-          memory: 2g
     restart: unless-stopped
+
   spark-worker-2:
+    platform: linux/amd64
     build:
-      context: spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark.Dockerfile
     container_name: spark-worker-2
     hostname: spark-worker-2
-    user: root
     depends_on:
       - spark-master
     ports:
       - "8082:8081"
-    environment:
-      SPARK_NO_DAEMONIZE: "true"
-      SPARK_WORKER_WEBUI_PORT: "8081"
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      --webui-port 8081
+      spark://spark-master:7077
     volumes:
       - ../spark:/opt/spark-apps
       - ../outputs:/opt/spark-apps/outputs
       - ../data:/opt/spark-data
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077
-      --memory 768M --cores 2 --webui-port 8081 &&
-      tail -f /opt/spark/logs/spark--org.apache.spark.deploy.worker.Worker-*.out"
-    deploy:
-      resources:
-        limits:
-          memory: 1g
     restart: unless-stopped
+
   airflow-init:
     image: apache/airflow:2.7.2
     container_name: airflow-init
@@ -330,17 +302,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Initialize DB + create admin user on first start
-    command: >
-      bash -c "superset db upgrade &&
-               superset fab create-admin
-                 --username admin
-                 --firstname Admin
-                 --lastname XAI
-                 --email admin@healthxai.local
-                 --password admin123 || true &&
-               superset init &&
-               superset run -p 8088 --with-threads --reload --debugger"
     deploy:
       resources:
         limits:
